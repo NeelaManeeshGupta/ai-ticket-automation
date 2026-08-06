@@ -243,6 +243,9 @@ Return ONLY valid raw JSON matching this JSON schema:
 
         is_sap_incident = has_sap if (has_sap or not is_marketing) else False
 
+        cust_name = cust_name.replace('\n', ' ').replace('\r', '').strip()
+        company = company.replace('\n', ' ').replace('\r', '').strip()
+
         desc = email_body.strip() if email_body.strip() else f"Issue reported in {system_id} system: {error_msg}"
 
         return ExtractionResult(
