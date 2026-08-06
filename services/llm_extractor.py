@@ -209,24 +209,30 @@ Return ONLY valid raw JSON matching this JSON schema:
         if "prd" in lower_text and any(kw in lower_text for kw in ["down", "blocker", "critical"]):
             priority = "1-Very High"
 
-        # Extract Reporter Name from Body Signature
+        # Extract Reporter Name & Company from Signature (e.g. Thanks, \n Michael \n XYZ Technologies)
         cust_name = sender_name
-        sig_match = re.search(r"(?:regards|thanks|sincerely)\s*,?\s*[\r\n]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)", email_body, re.IGNORECASE)
-        if sig_match:
-            candidate = sig_match.group(1).strip()
-            if candidate.lower() not in ["customer", "support", "team", "regards", "thanks", "abc", "technologies"]:
-                cust_name = candidate
-
-        # Extract Company Name from Body Signature
         company = ""
-        comp_match = re.search(r"(?:customer|company|organization|from):?\s*([A-Za-z0-9\s]+(?:Pvt|Ltd|Inc|Corp|GmbH|Technologies|Solutions|Logistics)[A-Za-z0-9\s]*)", email_body, re.IGNORECASE)
-        if comp_match:
-            raw_comp = comp_match.group(1).strip()
-            company = re.split(r"\b(regards|thanks|sincerely|customer)\b", raw_comp, flags=re.IGNORECASE)[0].strip()
-        else:
-            comp_match2 = re.search(r"(?:inc|corp|ltd|gmbh|solutions|logistics|technologies)", sender_email.split('@')[-1], re.IGNORECASE)
-            if comp_match2:
-                company = sender_email.split('@')[-1].split('.')[0].capitalize()
+
+        sig_lines = re.split(r"(?:thanks|regards|sincerely|cheers)\s*,?", email_body, flags=re.IGNORECASE)
+        if len(sig_lines) > 1:
+            after_sig = sig_lines[-1].strip().split('\n')
+            non_empty = [l.strip() for l in after_sig if l.strip()]
+            if len(non_empty) >= 1 and len(non_empty[0].split()) <= 3:
+                candidate_name = non_empty[0]
+                if candidate_name.lower() not in ["customer", "support", "team"]:
+                    cust_name = candidate_name
+            if len(non_empty) >= 2 and len(non_empty[1].split()) <= 5:
+                company = non_empty[1]
+
+        if not company:
+            comp_match = re.search(r"(?:customer|company|organization|from):?\s*([A-Za-z0-9\s]+(?:Pvt|Ltd|Inc|Corp|GmbH|Technologies|Solutions|Logistics|Systems|Services)[A-Za-z0-9\s]*)", email_body, re.IGNORECASE)
+            if comp_match:
+                raw_comp = comp_match.group(1).strip()
+                company = re.split(r"\b(regards|thanks|sincerely|customer)\b", raw_comp, flags=re.IGNORECASE)[0].strip()
+            else:
+                comp_match2 = re.search(r"(?:inc|corp|ltd|gmbh|solutions|logistics|technologies)", sender_email.split('@')[-1], re.IGNORECASE)
+                if comp_match2:
+                    company = sender_email.split('@')[-1].split('.')[0].capitalize()
 
         # Heuristic SAP Relevance Check
         sap_keywords = [r"\bsap\b", r"\btcode\b", r"\bva01\b", r"\bme21n\b", r"\bfb01\b", r"\bst22\b", r"\bsu53\b", r"\bprd\b", r"\bdev\b", r"\bqas\b", r"\babap\b", r"\bincident\b", r"\bticket\b", r"\bjoule\b"]
