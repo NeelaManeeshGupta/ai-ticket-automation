@@ -97,27 +97,22 @@ def process_email_toplevel(db: Session = Depends(get_db)):
 from pathlib import Path
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
-# Static Directory Setup
 STATIC_DIR = Path(__file__).resolve().parent / "static"
-if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.get("/", tags=["System Root"])
 def root_redirect():
     """Redirect root path to interactive dashboard."""
-    from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/dashboard")
 
-@app.get("/dashboard", tags=["System Root"])
+@app.get("/dashboard", response_class=HTMLResponse, tags=["System Root"])
 def get_dashboard():
     """Serves the live interactive SAP Support AI Ticket Portal Web Dashboard."""
     dashboard_file = STATIC_DIR / "index.html"
     if dashboard_file.exists():
-        return FileResponse(str(dashboard_file))
-    return {"message": "Dashboard file not found."}
+        return HTMLResponse(content=dashboard_file.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>SAP Support AI Ticket Portal Dashboard</h1>")
 
 @app.get("/health", tags=["System Root"])
 def health_check():
