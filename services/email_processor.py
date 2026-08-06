@@ -49,6 +49,17 @@ class EmailProcessorService:
         """Processes a single email payload end-to-end and saves a Ticket."""
         logger.info(f"Processing email from {email.sender_email} (Subject: {email.subject})")
 
+        # Step 0: Deduplication Guard - Skip if ticket already exists for this subject & sender
+        from database.models import Ticket
+        existing = db.query(Ticket).filter(
+            Ticket.customer_email == email.sender_email,
+            Ticket.subject == email.subject
+        ).first()
+
+        if existing:
+            logger.info(f"Deduplication Guard: Ticket {existing.ticket_id} already exists for '{email.subject}'. Skipping duplicate creation.")
+            return None
+
         # Step 1: Run OCR on attachments & prepare image bytes
         ocr_text = ""
         attachment_paths = []
