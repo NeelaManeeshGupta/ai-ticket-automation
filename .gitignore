@@ -1,0 +1,19 @@
+# Secrets & Environment
+.env
+gmail/token.json
+gmail/credentials.json
+credentials.json
+
+# SQLite Database & Uploads
+*.db
+sap_tickets.db*
+uploads/*
+!uploads/.gitkeep
+
+# Python & Cache
+__pycache__/
+*.pyc
+.venv/
+dist/
+.idea/
+.vscode/

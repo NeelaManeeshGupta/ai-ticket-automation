@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+pydantic-settings
+google-genai
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+rapidocr-onnxruntime
+pypdf
+pillow
+python-multipart
