@@ -24,9 +24,9 @@ class GmailClient:
         credentials_path = settings.GMAIL_CREDENTIALS_FILE
         token_path = settings.GMAIL_TOKEN_FILE
 
-        if not os.path.exists(credentials_path) and not os.path.exists(token_path):
+        if os.environ.get("VERCEL") or (not os.path.exists(credentials_path) and not os.path.exists(token_path)):
             logger.warning(
-                f"Gmail credentials not found at '{credentials_path}'. Falling back to MOCK mode."
+                f"Serverless environment or Gmail credentials not found. Operating in MOCK mode."
             )
             self.is_mock = True
             return None

@@ -105,6 +105,12 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+@app.get("/", tags=["System Root"])
+def root_redirect():
+    """Redirect root path to interactive dashboard."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/dashboard")
+
 @app.get("/dashboard", tags=["System Root"])
 def get_dashboard():
     """Serves the live interactive SAP Support AI Ticket Portal Web Dashboard."""
