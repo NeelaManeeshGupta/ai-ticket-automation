@@ -97,9 +97,14 @@ def process_email_toplevel(db: Session = Depends(get_db)):
 from pathlib import Path
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    """Favicon endpoint returning 204 No Content to prevent browser console 500 warnings."""
+    return Response(status_code=204)
 
 @app.get("/", tags=["System Root"])
 def root_redirect():
