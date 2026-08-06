@@ -2,7 +2,7 @@ import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from api.deps import get_db
+from routes.deps import get_db
 from services.ticket_service import ticket_service
 from services.email_processor import email_processor
 from schemas.ticket_schemas import TicketResponse, TicketFilter
@@ -38,40 +38,25 @@ def get_all_tickets(
     return tickets
 
 @router.get("/{identifier}", response_model=TicketResponse, summary="Get ticket by ID or Ticket Number")
-def get_ticket_details(identifier: str, db: Session = Depends(get_db)):
+def get_ticket(identifier: str, db: Session = Depends(get_db)):
     """
-    Fetch ticket details by ticket_id string (e.g. 'SAP-INC-1001') or database integer ID (e.g. 1).
+    Get a single ticket by its internal database ID or public ticket ID.
     """
-    ticket = ticket_service.get_ticket_by_id(db, identifier)
+    ticket = ticket_service.get_ticket_by_identifier(db, identifier)
     if not ticket:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Ticket with ID or Ticket Number '{identifier}' not found."
+            detail=f"Ticket with ID '{identifier}' not found."
         )
     return ticket
 
-@router.post("/process-email", response_model=ProcessEmailResponse, summary="Trigger Gmail reading & ticket creation")
-def trigger_email_processing(db: Session = Depends(get_db)):
+@router.post("", response_model=TicketResponse, status_code=status.HTTP_201_CREATED, summary="Create a new ticket manually")
+def create_ticket_manual(ticket_in: TicketResponse, db: Session = Depends(get_db)):
     """
-    Manually trigger checking unread customer emails and converting them into SAP support tickets.
+    Manually create a support ticket.
     """
-    logger.info("Manual trigger received for /tickets/process-email")
-    response = email_processor.process_unread_inbox(db)
-    return response
-
-@router.post("/process-mock-email", response_model=ProcessEmailResponse, summary="Test email processing with custom payload")
-def process_mock_email_payload(payload: EmailPayload, db: Session = Depends(get_db)):
-    """
-    Post a custom email payload to test OCR, AI extraction, and ticket creation locally.
-    """
-    logger.info(f"Custom mock email payload received from {payload.sender_email}")
-    ticket_id = email_processor.process_single_email(db, payload)
-    return ProcessEmailResponse(
-        success=True,
-        processed_count=1,
-        tickets_created=[ticket_id],
-        message=f"Successfully processed email and created ticket {ticket_id}."
-    )
+    ticket = ticket_service.create_ticket(db, ticket_in)
+    return ticket
 
 @router.patch("/{identifier}/status", response_model=TicketResponse, summary="Update ticket status")
 def update_ticket_status(identifier: str, status_val: str = Query(..., alias="status"), db: Session = Depends(get_db)):
@@ -108,6 +93,10 @@ def purge_non_sap_tickets(db: Session = Depends(get_db)):
             db.delete(t)
             deleted_count += 1
             
+    db.commit()
+    logger.info(f"Purged {deleted_count} non-SAP tickets from database.")
+    return {"status": "success", "purged_count": deleted_count}
+
 @router.delete("/clear-all", summary="Delete all tickets from database for a fresh start")
 def clear_all_tickets(db: Session = Depends(get_db)):
     """

@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from config import settings
 from database.connection import init_db, get_db
-from api.ticket_routes import router as ticket_router
-from api.webhook_routes import router as webhook_router
+from routes.ticket_routes import router as ticket_router
+from routes.webhook_routes import router as webhook_router
 from gmail.gmail_client import gmail_client
 from services.email_processor import email_processor
 from schemas.email_schemas import ProcessEmailResponse
