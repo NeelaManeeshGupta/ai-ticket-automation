@@ -29,11 +29,11 @@ class EmailReader:
 
         emails: List[EmailPayload] = []
         try:
-            # Query unread OR recent emails from the past day so opened test emails are also captured
-            results = service.users().messages().list(userId='me', q='is:unread in:anywhere OR newer_than:1d').execute()
+            # Query strictly UNREAD emails so processed emails are never repeated
+            results = service.users().messages().list(userId='me', q='is:unread in:anywhere').execute()
             messages = results.get('messages', [])
 
-            logger.info(f"Found {len(messages)} recent/unread email(s) in Gmail.")
+            logger.info(f"Found {len(messages)} unread email(s) in Gmail.")
 
             for msg_summary in messages:
                 msg_id = msg_summary['id']
