@@ -35,12 +35,18 @@ class Settings(BaseSettings):
 
     @property
     def absolute_upload_dir(self) -> Path:
-        path = BASE_DIR / self.UPLOAD_DIR
-        path.mkdir(parents=True, exist_ok=True)
+        if os.environ.get("VERCEL"):
+            path = Path("/tmp/uploads")
+        else:
+            path = BASE_DIR / self.UPLOAD_DIR
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
         return path
 
     class Config:
-        env_file = str(BASE_DIR / ".env")
+        env_file = str(BASE_DIR / ".env") if (BASE_DIR / ".env").exists() else None
         env_file_encoding = "utf-8"
         extra = "ignore"
 
